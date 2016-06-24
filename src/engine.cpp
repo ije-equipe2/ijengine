@@ -346,19 +346,8 @@ namespace ijengine
 
             auto r = bbA.intersection(bbB);
 
-            if (r.area() == 0)
+            if (r.area() > 0)
                 return r;
-
-            for (auto hbA : a->hit_boxes())
-            {
-                for (auto hbB : b->hit_boxes())
-                {
-                    auto t = hbA.intersection(hbB);
-
-                    if (t.area() > 0)
-                        return t;
-                }
-            }
 
             return Rectangle(0, 0, 0, 0);
         }
