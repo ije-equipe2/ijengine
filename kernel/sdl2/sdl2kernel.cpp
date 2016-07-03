@@ -15,18 +15,31 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+#include <vector>
 
 using namespace ijengine;
+using std::vector;
 
 MouseEvent::State button_state(int button_mask, int button_id);
 static KeyboardEvent::Modifier key_modifier(Uint16 modifier);
 
+vector<SDL_Joystick *> JOYSTICKS;
+
 SDL2Kernel::SDL2Kernel()
 {
-    int rc = SDL_Init(SDL_INIT_VIDEO);
+    int rc = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
     if (rc)
         throw Exception("Error on SDL2 initialization");
+
+    if(SDL_NumJoysticks() == 2) {
+        for(int i = 0; i < SDL_NumJoysticks(); i++) {
+            JOYSTICKS.push_back(SDL_JoystickOpen(i));
+        }
+    }
+    else {
+        printf("Warning! Only %d are plugged. We need at least 2!\n", SDL_NumJoysticks());
+    }
 
     rc = TTF_Init();
 
@@ -41,11 +54,16 @@ SDL2Kernel::SDL2Kernel()
 
 SDL2Kernel::~SDL2Kernel()
 {
+    for(auto joystick : JOYSTICKS) {
+        SDL_JoystickClose(joystick);
+    }
+
     if (TTF_WasInit())
         TTF_Quit();
 
     if (SDL_WasInit(SDL_INIT_VIDEO))
         SDL_Quit();
+
 }
 
 Window *
@@ -201,27 +219,28 @@ SDL2Kernel::init_table()
 
     m_button_table[SDL_CONTROLLER_BUTTON_INVALID] = JoystickEvent::BUTTON_INVALID;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_A] = JoystickEvent::A;
-    m_button_table[SDL_CONTROLLER_BUTTON_B] = JoystickEvent::B;
+    m_button_table[SDL_CONTROLLER_BUTTON_A] = JoystickEvent::TRIANGLE;
+    m_button_table[SDL_CONTROLLER_BUTTON_B] = JoystickEvent::CIRCLE;
     m_button_table[SDL_CONTROLLER_BUTTON_X] = JoystickEvent::X;
-    m_button_table[SDL_CONTROLLER_BUTTON_Y] = JoystickEvent::Y;
+    m_button_table[SDL_CONTROLLER_BUTTON_Y] = JoystickEvent::SQUARE;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_BACK] = JoystickEvent::BACK;
-    m_button_table[SDL_CONTROLLER_BUTTON_GUIDE] = JoystickEvent::GUIDE;
-    m_button_table[SDL_CONTROLLER_BUTTON_START] = JoystickEvent::START;
+    m_button_table[4] = JoystickEvent::L1;
+    m_button_table[5] = JoystickEvent::R1;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_LEFTSTICK] = JoystickEvent::LEFTSTICK;
-    m_button_table[SDL_CONTROLLER_BUTTON_RIGHTSTICK] = JoystickEvent::RIGHTSTICK;
+    m_button_table[6] = JoystickEvent::L2;
+    m_button_table[7] = JoystickEvent::R2;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_LEFTSHOULDER] = JoystickEvent::LEFTSHOULDER;
-    m_button_table[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER] = JoystickEvent::RIGHTSHOULDER;
+    // m_button_table[SDL_CONTROLLER_BUTTON_BACK] = JoystickEvent::BACK;
+    // m_button_table[SDL_CONTROLLER_BUTTON_GUIDE] = JoystickEvent::GUIDE;
+    // m_button_table[SDL_CONTROLLER_BUTTON_START] = JoystickEvent::START;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_DPAD_UP] = JoystickEvent::DPAD_UP;
-    m_button_table[SDL_CONTROLLER_BUTTON_DPAD_DOWN] = JoystickEvent::DPAD_DOWN;
-    m_button_table[SDL_CONTROLLER_BUTTON_DPAD_LEFT] = JoystickEvent::DPAD_LEFT;
-    m_button_table[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = JoystickEvent::DPAD_RIGHT;
 
-    m_button_table[SDL_CONTROLLER_BUTTON_MAX] = JoystickEvent::BUTTON_MAX;
+    // m_button_table[SDL_CONTROLLER_BUTTON_DPAD_UP] = JoystickEvent::DPAD_UP;
+    // m_button_table[SDL_CONTROLLER_BUTTON_DPAD_DOWN] = JoystickEvent::DPAD_DOWN;
+    // m_button_table[SDL_CONTROLLER_BUTTON_DPAD_LEFT] = JoystickEvent::DPAD_LEFT;
+    // m_button_table[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = JoystickEvent::DPAD_RIGHT;
+
+    // m_button_table[SDL_CONTROLLER_BUTTON_MAX] = JoystickEvent::BUTTON_MAX;
 
     m_axis_table[SDL_CONTROLLER_AXIS_INVALID] = JoystickEvent::AXIS_INVALID;
 
@@ -366,16 +385,36 @@ SDL2Kernel::pending_joystick_events(unsigned now)
             auto event = JoystickEvent(timestamp,
                 JoystickEvent::State::BUTTON_PRESSED,
                 m_button_table[it->jbutton.button],
-                JoystickEvent::Axis::AXIS_INVALID);
+                JoystickEvent::Axis::AXIS_INVALID,
+                it->jbutton.which,
+                it->jbutton.state);
 
-                events.push_back(event);
-                it = m_events.erase(it);
+            // printf("LEFT_STICK: %d\n", SDL_CONTROLLER_BUTTON_LEFTSTICK);
+            // printf("RIGHT_STICK: %d\n", SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+            // printf("LEFT_SHOULDER: %d\n", SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+            // printf("RIGHT_SHOULDER: %d\n", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+            // printf("TYPE: SDL_JOYBUTTONDOWN\n");
+            // printf("TIMESTAMP: %u\n", timestamp);
+            // printf("BUTTON: %d\n", it->jbutton.button);
+            // printf("WHICH: %d\n", it->jbutton.which);
+            // printf("STATE: %d\n", it->jbutton.state);
+
+            events.push_back(event);
+            it = m_events.erase(it);
         } else if (it->type == SDL_JOYBUTTONUP)
         {
             auto event = JoystickEvent(timestamp,
                 JoystickEvent::State::BUTTON_RELEASED,
                 m_button_table[it->jbutton.button],
-                JoystickEvent::Axis::AXIS_INVALID);
+                JoystickEvent::Axis::AXIS_INVALID,
+                it->jbutton.which,
+                it->jbutton.state);
+
+            // printf("TYPE: SDL_JOYBUTTONUP\n");
+            // printf("TIMESTAMP: %u\n", timestamp);
+            // printf("BUTTON: %d\n", it->jbutton.button);
+            // printf("WHICH: %d\n", it->jbutton.which);
+            // printf("STATE: %d\n", it->jbutton.state);
 
             events.push_back(event);
             it = m_events.erase(it);
@@ -384,7 +423,16 @@ SDL2Kernel::pending_joystick_events(unsigned now)
             auto event = JoystickEvent(timestamp,
                 JoystickEvent::State::AXIS_MOTION,
                 JoystickEvent::Button::BUTTON_INVALID,
-                m_axis_table[it->jaxis.axis]);
+                m_axis_table[it->jaxis.axis],
+                it->jaxis.which,
+                it->jaxis.value);
+
+            // printf("TYPE: SDL_JOYAXISMOTION\n");
+            // printf("TIMESTAMP: %u\n", timestamp);
+            // printf("RAW AXIS: %d\n", it->jaxis.axis);
+            // printf("AXIS: %d\n", m_axis_table[it->jaxis.axis]);
+            // printf("WHICH: %d\n", it->jaxis.which);
+            // printf("VALUE: %d\n", it->jaxis.value);
 
             events.push_back(event);
             it = m_events.erase(it);

@@ -146,6 +146,10 @@ namespace ijengine
             game_events.merge(translate<MouseEvent>(mouse_events,
                 translators));
 
+            auto joystick_events = kernel->pending_joystick_events(now);
+            game_events.merge(translate<JoystickEvent>(joystick_events,
+                translators));
+
             game_events.sort();
 
             for (auto event : game_events)
