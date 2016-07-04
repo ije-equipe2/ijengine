@@ -81,11 +81,11 @@ namespace ijengine
         {
             return kernel->create_window(title, w, h, scale);
         }
-
-		void
-		set_full_screen(int mode){
-			return kernel->set_full_screen(mode);
-		}
+        
+        void
+        set_full_screen(int mode) {
+            return kernel->set_full_screen(mode);
+        }
     }
 
     namespace audio

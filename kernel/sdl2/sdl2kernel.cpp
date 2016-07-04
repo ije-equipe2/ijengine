@@ -31,15 +31,11 @@ SDL2Kernel::SDL2Kernel()
 
     if (rc)
         throw Exception("Error on SDL2 initialization");
-
-    if(SDL_NumJoysticks() == 2) {
-        for(int i = 0; i < SDL_NumJoysticks(); i++) {
-            JOYSTICKS.push_back(SDL_JoystickOpen(i));
-        }
+    
+    for(int i = 0; i < SDL_NumJoysticks(); i++) {
+        JOYSTICKS.push_back(SDL_JoystickOpen(i));
     }
-    else {
-        printf("Warning! Only %d are plugged. We need at least 2!\n", SDL_NumJoysticks());
-    }
+    printf("%d joysticks are plugged.\n", SDL_NumJoysticks());
 
     rc = TTF_Init();
 
@@ -86,16 +82,16 @@ SDL2Kernel::create_window(const string& title, int w, int h, double scale)
 void
 SDL2Kernel::set_full_screen(int mode)
 {
-	int flag;
+    int flag;
 
-	if(mode == 0)
-		flag = 0;
-	else if(mode == 1)
-		flag = SDL_WINDOW_FULLSCREEN;
-	else
-		flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
+    if(mode == 0)
+        flag = 0;
+    else if(mode == 1)
+        flag = SDL_WINDOW_FULLSCREEN;
+    else
+        flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
 
-	SDL_SetWindowFullscreen(m_window, flag);
+    SDL_SetWindowFullscreen(m_window, flag);
 }
 
 static KeyboardEvent::Modifier
@@ -389,16 +385,6 @@ SDL2Kernel::pending_joystick_events(unsigned now)
                 it->jbutton.which,
                 it->jbutton.state);
 
-            // printf("LEFT_STICK: %d\n", SDL_CONTROLLER_BUTTON_LEFTSTICK);
-            // printf("RIGHT_STICK: %d\n", SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-            // printf("LEFT_SHOULDER: %d\n", SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-            // printf("RIGHT_SHOULDER: %d\n", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-            // printf("TYPE: SDL_JOYBUTTONDOWN\n");
-            // printf("TIMESTAMP: %u\n", timestamp);
-            // printf("BUTTON: %d\n", it->jbutton.button);
-            // printf("WHICH: %d\n", it->jbutton.which);
-            // printf("STATE: %d\n", it->jbutton.state);
-
             events.push_back(event);
             it = m_events.erase(it);
         } else if (it->type == SDL_JOYBUTTONUP)
@@ -410,12 +396,6 @@ SDL2Kernel::pending_joystick_events(unsigned now)
                 it->jbutton.which,
                 it->jbutton.state);
 
-            // printf("TYPE: SDL_JOYBUTTONUP\n");
-            // printf("TIMESTAMP: %u\n", timestamp);
-            // printf("BUTTON: %d\n", it->jbutton.button);
-            // printf("WHICH: %d\n", it->jbutton.which);
-            // printf("STATE: %d\n", it->jbutton.state);
-
             events.push_back(event);
             it = m_events.erase(it);
         } else if (it->type == SDL_JOYAXISMOTION)
@@ -426,13 +406,6 @@ SDL2Kernel::pending_joystick_events(unsigned now)
                 m_axis_table[it->jaxis.axis],
                 it->jaxis.which,
                 it->jaxis.value);
-
-            // printf("TYPE: SDL_JOYAXISMOTION\n");
-            // printf("TIMESTAMP: %u\n", timestamp);
-            // printf("RAW AXIS: %d\n", it->jaxis.axis);
-            // printf("AXIS: %d\n", m_axis_table[it->jaxis.axis]);
-            // printf("WHICH: %d\n", it->jaxis.which);
-            // printf("VALUE: %d\n", it->jaxis.value);
 
             events.push_back(event);
             it = m_events.erase(it);
