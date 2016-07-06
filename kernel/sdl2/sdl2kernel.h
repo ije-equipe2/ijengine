@@ -18,8 +18,6 @@ public:
     Window * create_window(const string& title, int w, int h, double scale);
     void set_full_screen(int mode);
 
-	void set_full_screen(int mode);
-
     void set_audio_dir(const string& dir_path);
     void play_audio_from_path(const string& title);
     void stop_audio();
@@ -48,8 +46,6 @@ private:
     map<unsigned, JoystickEvent::Button> m_button_table;
     map<unsigned, JoystickEvent::Axis> m_axis_table;
 
-    SDL_Window *m_window;
-    
     void init_table();
     void update_pending_events(unsigned now);
 

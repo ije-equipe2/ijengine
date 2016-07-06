@@ -31,11 +31,7 @@ SDL2Kernel::SDL2Kernel()
 
     if (rc)
         throw Exception("Error on SDL2 initialization");
-    
-    // if(MIX_INIT_MP3 != Mix_Init(MIX_INIT_MP3)) {
-    //     printf("%s\n", Mix_GetError());
-    //     throw Exception("Could not initialize mixer.");
-    // }
+
 
     for(int i = 0; i < SDL_NumJoysticks(); i++) {
         JOYSTICKS.push_back(SDL_JoystickOpen(i));
@@ -43,7 +39,7 @@ SDL2Kernel::SDL2Kernel()
 
     printf("%d joysticks are plugged.\n", SDL_NumJoysticks());
 
-    rc = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+    rc = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 128);
 
     if(rc) 
         throw Exception("Error on audio opening");
@@ -281,7 +277,7 @@ SDL2Kernel::set_audio_dir(const string& dir_path)
 
 void
 SDL2Kernel::play_audio_from_path(const string& path)
-{
+{   
     if(Mix_PlayingMusic() == 0)
     {
         if(path.empty()) {
