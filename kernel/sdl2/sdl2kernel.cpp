@@ -27,15 +27,26 @@ vector<SDL_Joystick *> JOYSTICKS;
 
 SDL2Kernel::SDL2Kernel()
 {
-    int rc = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+    int rc = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 
     if (rc)
         throw Exception("Error on SDL2 initialization");
     
+    // if(MIX_INIT_MP3 != Mix_Init(MIX_INIT_MP3)) {
+    //     printf("%s\n", Mix_GetError());
+    //     throw Exception("Could not initialize mixer.");
+    // }
+
     for(int i = 0; i < SDL_NumJoysticks(); i++) {
         JOYSTICKS.push_back(SDL_JoystickOpen(i));
     }
+
     printf("%d joysticks are plugged.\n", SDL_NumJoysticks());
+
+    rc = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+
+    if(rc) 
+        throw Exception("Error on audio opening");
 
     rc = TTF_Init();
 
@@ -53,6 +64,8 @@ SDL2Kernel::~SDL2Kernel()
     for(auto joystick : JOYSTICKS) {
         SDL_JoystickClose(joystick);
     }
+
+    Mix_Quit();
 
     if (TTF_WasInit())
         TTF_Quit();
@@ -272,13 +285,8 @@ SDL2Kernel::play_audio_from_path(const string& path)
     if(Mix_PlayingMusic() == 0)
     {
         if(path.empty()) {
+            printf("Empty audio path\n");
         }
-            // printf("Empty audio path\n");
-
-        int init_audio = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
-
-        if(init_audio < 0)
-            printf("Audio not initialized\n");
 
         Mix_Music *audio;
 
@@ -287,8 +295,8 @@ SDL2Kernel::play_audio_from_path(const string& path)
         audio = Mix_LoadMUS(audio_path.c_str());
 
         if(not audio){
-            // printf("Failed to load audio\n");
-            // printf("error: %s\n", Mix_GetError());
+            printf("Failed to load audio\n");
+            printf("error: %s\n", Mix_GetError());
         }
 
         Mix_FadeInMusic(audio, -1, 2000);
