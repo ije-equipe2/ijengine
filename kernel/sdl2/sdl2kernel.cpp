@@ -25,6 +25,17 @@ static KeyboardEvent::Modifier key_modifier(Uint16 modifier);
 
 vector<SDL_Joystick *> JOYSTICKS;
 
+const int NUMBER_OF_MUSIC_CHANNELS = 20;
+
+void when_channel_is_done(int channel) {
+    printf("Channel being halted: %d\n", channel);
+    Mix_Chunk *chunk = Mix_GetChunk(channel);
+    if(chunk) {
+        Mix_FreeChunk(chunk);
+        chunk = nullptr;
+    }
+}
+
 SDL2Kernel::SDL2Kernel()
 {
     int rc = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
@@ -40,6 +51,7 @@ SDL2Kernel::SDL2Kernel()
     printf("%d joysticks are plugged.\n", SDL_NumJoysticks());
 
     rc = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 128);
+    Mix_ChannelFinished(when_channel_is_done);
 
     if(rc) 
         throw Exception("Error on audio opening");
@@ -61,6 +73,7 @@ SDL2Kernel::~SDL2Kernel()
         SDL_JoystickClose(joystick);
     }
 
+    Mix_CloseAudio();
     Mix_Quit();
 
     if (TTF_WasInit())
@@ -315,6 +328,11 @@ SDL2Kernel::play_sound_effect(const string& path)
     }
 
     Mix_PlayChannel(-1, effect, 0);
+}
+
+void
+SDL2Kernel::stop_audio_channel(int channel) {
+    Mix_HaltChannel(channel);
 }
 
 int

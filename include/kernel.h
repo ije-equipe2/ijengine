@@ -34,7 +34,7 @@ namespace ijengine {
         virtual void play_audio_from_path(const string& title) = 0;
         virtual void stop_audio() = 0;
         virtual void play_sound_effect(const string& path) = 0;
-
+        virtual void stop_audio_channel(int channel) = 0;
         virtual int set_audio_volume(double percentage) = 0;
         virtual int set_sound_effect_volume(double percentage) = 0;
 

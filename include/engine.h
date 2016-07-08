@@ -43,7 +43,7 @@ namespace ijengine {
         void stop_audio();
 
         void play_sound_effect(const string &path);
-
+        void stop_audio_channel(int channel);
         int set_audio_volume(double percentage);
         int set_sound_effect_volume(double percentage);
 

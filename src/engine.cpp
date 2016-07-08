@@ -125,6 +125,11 @@ namespace ijengine
         {
             return kernel->set_sound_effect_volume(percentage);
         }
+
+        void
+        stop_audio_channel(int channel) {
+            kernel->stop_audio_channel(channel);
+        }
     }
 
     namespace event
