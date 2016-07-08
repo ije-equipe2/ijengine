@@ -109,9 +109,9 @@ namespace ijengine
         }
 
         void
-        play_sound_effect(const string &path)
+        play_sound_effect(const string &path, int volume, int loops)
         {
-            kernel->play_sound_effect(path);
+            kernel->play_sound_effect(path, volume, loops);
         }
 
         int
